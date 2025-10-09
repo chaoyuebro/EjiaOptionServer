@@ -1,0 +1,4 @@
+/usr/local/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM=/usr/bin/make -DCMAKE_C_COMPILER=/usr/bin/cc -DCMAKE_CXX_COMPILER=/usr/local/bin/c++ -G "Unix Makefiles" -S /root/clionProjects/EjiaOptionServer -B /root/clionProjects/EjiaOptionServer/cmake-build-release-170-gcc54
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /root/clionProjects/EjiaOptionServer/cmake-build-release-170-gcc54
