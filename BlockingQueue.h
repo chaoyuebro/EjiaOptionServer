@@ -39,6 +39,29 @@ public:
 		std::lock_guard<std::mutex> lock(mutex_);
 		return queue_.size();
 	}
+
+	// 尝试清空队列，返回清空的元素数量
+	size_t clear()
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		size_t count = queue_.size();
+		queue_.clear();
+		return count;
+	}
+
+	// 尝试出队一个元素，如果队列为空返回false
+	bool try_dequeue(T& v)
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		if (queue_.empty())
+		{
+			return false;
+		}
+		v = std::move(queue_.front());
+		queue_.pop_front();
+		return true;
+	}
+
 private:
 	mutable std::mutex		mutex_;
 	std::condition_variable	notEmpty_;

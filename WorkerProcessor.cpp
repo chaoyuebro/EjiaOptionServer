@@ -125,21 +125,35 @@ void WorkerProcessor::Parse(const BYTE* bData, int iDataLen, ULONG dwConnId, str
 			//加包头
 			ADD_PACKET_HEAD
 		}
-		else if (strProtocol.CompareNoCase("MSHYLB") == 0)
-		{
-			string strResData;
-			CReadLock readlock(g_lockMSHeyueLiebiao);
-			memcpy(detailType, "TXT", sizeof(detailType));
-			strResData.append(packet->protocl, sizeof(packet->protocl));
-			strResData.append(detailType, sizeof(detailType));
-			strResData.append(g_strMSHeyueLiebiao);
-			readlock.unlock();
-			strResData.append(s_strProtoDelimiter);
-			//加包头
-			ADD_PACKET_HEAD
-		}
-		//当日明细
-		else if (strProtocol.CompareNoCase("OPDRMX") == 0)
+	else if (strProtocol.CompareNoCase("NOPHYLB") == 0)
+	{
+		string strResData;
+		CReadLock readlock(g_lockNHeyueLiebiao);
+		memcpy(detailType, "TXT", sizeof(detailType));
+		strResData.append(packet->protocl, sizeof(packet->protocl));
+		strResData.append(detailType, sizeof(detailType));
+		strResData.append(g_strNHeyueLiebiao);
+		//g_Logger->info("add g_strNHeyueLiebiao->{}", g_strNHeyueLiebiao);
+		readlock.unlock();
+		strResData.append(s_strProtoDelimiter);
+		//加包头
+		ADD_PACKET_HEAD
+	}
+	else if (strProtocol.CompareNoCase("MSHYLB") == 0)
+	{
+		string strResData;
+		CReadLock readlock(g_lockMSHeyueLiebiao);
+		memcpy(detailType, "TXT", sizeof(detailType));
+		strResData.append(packet->protocl, sizeof(packet->protocl));
+		strResData.append(detailType, sizeof(detailType));
+		strResData.append(g_strMSHeyueLiebiao);
+		readlock.unlock();
+		strResData.append(s_strProtoDelimiter);
+		//加包头
+		ADD_PACKET_HEAD
+	}
+	//当日明细
+	else if (strProtocol.CompareNoCase("OPDRMX") == 0)
 		{
 			CStringA strData(packet->data, iDataLength);
 			//一次可能会请求多个合约,协议体内容:ZCE|CF|905|C|3500|N\n SHFE|BU|2009|C|3500|N\n  N是可选项,如果有N就返回N条全量tick,如果没有就返回当天所有的增量tick		

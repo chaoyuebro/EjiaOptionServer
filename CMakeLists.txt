@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 project(EjiaOptionServer)
 set(CMAKE_CXX_STANDARD 14)
+add_definitions(-D__STDC_FORMAT_MACROS)
 file(GLOB_RECURSE  CPP_FILES
         "${PROJECT_SOURCE_DIR}/HPSocket/*.h"
         "${PROJECT_SOURCE_DIR}/HPSocket/*.cpp"

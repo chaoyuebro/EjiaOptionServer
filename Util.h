@@ -55,11 +55,13 @@ extern CCriSec g_lock5MinKlineCount;
 extern map<ComodityID, list<STimeSegment>> g_mapProductTradeTime;
 extern CSimpleRWLock g_lockProductTradeTime;
 //合约列表
+extern CStringA g_strNHeyueLiebiao;
 extern CStringA g_strHeyueLiebiao;
 extern CStringA g_strOPHeyueLiebiao;
 extern CStringA g_strMSHeyueLiebiao;
 //全部品种id下面包含的期权id列表
 extern map<ContractID, list<OptionID>> g_mapOptionIDs;
+extern CSimpleRWLock g_lockNHeyueLiebiao;
 extern CSimpleRWLock g_lockHeyueLiebiao;
 extern CSimpleRWLock g_lockOPHeyueLiebiao;
 extern CSimpleRWLock g_lockMSHeyueLiebiao;
@@ -119,7 +121,7 @@ void InitTradeTime();
 //从阿里云oss上面获取Option/Contract/TradeDay.LIST文件并初始化服务器上面的缓存副本
 extern void InitTradeDayList();
 //解析json内容并初始化g_mapComodityInfo结构和期权合约信息
-void InitOPHYXXAndPect(const CStringA& strJson,const bool& isUpdate=true);
+void InitOPHYXXAndPect(const CStringA& strJson, const bool& isUpdate = true);
 //本地初始化OPHYXX
 extern void InitOPHYXX();
 //判断新到来的行情是否是最新的,如果是则需要推送给客户端并计算K线
@@ -185,3 +187,4 @@ extern void HandledQuoteDataProc(PVOID arg);
 extern void SplitString(const std::string& s, std::vector<CString>& v, const std::string& c);
 //将郑商所的合约代码从3位修改为4位
 extern string ModifyZCEContractNo(const string& strContractNo);
+extern void UpdateNHYLBExpireDate(CStringA&);

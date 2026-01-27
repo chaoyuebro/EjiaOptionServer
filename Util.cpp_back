@@ -8,9 +8,6 @@
 #include "CountDownLatch.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
-#include <chrono>
-#include <thread>
-#include <atomic>
 #ifdef __GLIBC__
 #include <malloc.h>  // for malloc_trim
 #endif
@@ -1165,248 +1162,53 @@ void ClearCache()
 		//更新当前新的交易日, 后面推送过来的行情里面的交易日如果不等于新的交易日,则不存入最近5分钟行情队列和200条全量队列
 		g_iCurTradeDate = GetTradeDateInt();
 		g_Logger->info("{}->清理当天数据缓存", __FUNCTION__);
-
 		//清理tick去重队列
-		try {
-			g_lockUniqueTick.lock();
-			g_Logger->info("清理去重队列: set={}, list={}", g_setUniqueTick.size(), g_listUniqueTick.size());
-			set<CString>().swap(g_setUniqueTick);
-			list<CString>().swap(g_listUniqueTick);
-			g_lockUniqueTick.unlock();
-		}
-		catch (...)
-		{
-			g_lockUniqueTick.unlock();
-			g_Logger->error("清理去重队列异常");
-		}
-
+		g_lockUniqueTick.lock();
+		g_setUniqueTick.clear();
+		g_listUniqueTick.clear();
+		g_lockUniqueTick.unlock();
 		//清理近两百条全量tick缓存
-		try {
-			g_lock200QuanTick.lock();
-			map<OptionID, list<CString>>().swap(g_map200QuanTick);
-			g_lock200QuanTick.unlock();
-		}
-		catch (...)
-		{
-			g_lock200QuanTick.unlock();
-			g_Logger->error("清理200条全量tick异常");
-		}
-
+		g_lock200QuanTick.lock();
+		g_map200QuanTick.clear();
+		g_lock200QuanTick.unlock();
 		//清理当天未压缩和已压缩的增量tick缓存
-		try {
-			g_lockCompressTick.lock();
-			set<OptionID>().swap(g_setUploadTickQuoteId);
-			map<OptionID, string>().swap(g_mapCompressTick);
-			map<OptionID, string>().swap(g_mapUnCompressTick);
-			g_lockCompressTick.unlock();
-		}
-		catch (...)
-		{
-			g_lockCompressTick.unlock();
-			g_Logger->error("清理增量tick异常");
-		}
-
+		g_lockCompressTick.lock();
+		g_setUploadTickQuoteId.clear();
+		g_mapCompressTick.clear();
+		g_mapUnCompressTick.clear();
+		g_lockCompressTick.unlock();
 		//清理当天1分钟线的时间和根数
-		try {
-			g_lock1MinKlineCount.lock();
-			map<OptionID, KLineCount>().swap(g_map1MinKlineCount);
-			g_lock1MinKlineCount.unlock();
-		}
-		catch (...)
-		{
-			g_lock1MinKlineCount.unlock();
-			g_Logger->error("清理1分钟K线计数异常");
-		}
-
+		g_lock1MinKlineCount.lock();
+		g_map1MinKlineCount.clear();
+		g_lock1MinKlineCount.unlock();
 		//清理当天1分钟线
-		try {
-			g_lock1MinKline.lock();
-			set<OptionID>().swap(g_setUpload1MQuoteId);
-			map<OptionID, KLineCache>().swap(g_map1MinKlineDay);
-			g_lock1MinKline.unlock();
-		}
-		catch (...)
-		{
-			g_lock1MinKline.unlock();
-			g_Logger->error("清理1分钟K线异常");
-		}
-
+		g_lock1MinKline.lock();
+		g_setUpload1MQuoteId.clear();
+		g_map1MinKlineDay.clear();
+		g_lock1MinKline.unlock();
 		//清理当天5分钟线的时间和根数
-		try {
-			g_lock5MinKlineCount.lock();
-			map<OptionID, KLineCount>().swap(g_map5MinKlineCount);
-			g_lock5MinKlineCount.unlock();
-		}
-		catch (...)
-		{
-			g_lock5MinKlineCount.unlock();
-			g_Logger->error("清理5分钟K线计数异常");
-		}
-
+		g_lock5MinKlineCount.lock();
+		g_map5MinKlineCount.clear();
+		g_lock5MinKlineCount.unlock();
 		//清理当天5分钟线
-		try {
-			g_lock5MinKline.lock();
-			set<OptionID>().swap(g_setUpload5MQuoteId);
-			map<OptionID, KLineCache>().swap(g_map5MinKline);
-			g_lock5MinKline.unlock();
-		}
-		catch (...)
-		{
-			g_lock5MinKline.unlock();
-			g_Logger->error("清理5分钟K线异常");
-		}
-
+		g_lock5MinKline.lock();
+		g_setUpload5MQuoteId.clear();
+		g_map5MinKline.clear();
+		g_lock5MinKline.unlock();
 		//清理日线
-		try {
-			g_lockDayKline.lock();
-			set<OptionID>().swap(g_setUploadDayQuoteId);
-			map<OptionID, KLine>().swap(g_mapDayKLine);
-			g_lockDayKline.unlock();
-		}
-		catch (...)
-		{
-			g_lockDayKline.unlock();
-			g_Logger->error("清理日线异常");
-		}
-
-		//清理原始行情缓存
-		try {
-			g_lockNativeQuotes.lock();
-			g_Logger->info("清理原始行情缓存: {}", g_mapNativeQuotes.size());
-			map<OptionID, string>().swap(g_mapNativeQuotes);
-			set<OptionID>().swap(g_setUploadNativeQuoteId);
-			g_lockNativeQuotes.unlock();
-		}
-		catch (...)
-		{
-			g_lockNativeQuotes.unlock();
-			g_Logger->error("清理原始行情缓存异常");
-		}
-
-		//清理最近5分钟tick缓存
-		try {
-			g_lock5MinTick.lock();
-			g_Logger->info("清理5分钟tick缓存: {}", g_map5MinTick.size());
-			map<OptionID, string>().swap(g_map5MinTick);
-			g_lock5MinTick.unlock();
-		}
-		catch (...)
-		{
-			g_lock5MinTick.unlock();
-			g_Logger->error("清理5分钟tick缓存异常");
-		}
-
-		//清理最新行情缓存
-		try {
-			g_lockLastQuote.lock();
-			g_Logger->info("清理最新行情缓存: {}", g_mapLastQuote.size());
-			map<OptionID, HandledQuoteData>().swap(g_mapLastQuote);
-			g_lockLastQuote.unlock();
-		}
-		catch (...)
-		{
-			g_lockLastQuote.unlock();
-			g_Logger->error("清理最新行情缓存异常");
-		}
-
-		//清理客户端等待缓存服务器的应答数据
-		try {
-			g_lockClientKLineCache.lock();
-			g_Logger->info("清理客户端K线缓存: {}", g_mapClientKLineCache.size());
-			map<UINT32, ClientKLineCache>().swap(g_mapClientKLineCache);
-			g_lockClientKLineCache.unlock();
-		}
-		catch (...)
-		{
-			g_lockClientKLineCache.unlock();
-			g_Logger->error("清理客户端K线缓存异常");
-		}
-
+		g_lockDayKline.lock();
+		g_setUploadDayQuoteId.clear();
+		g_mapDayKLine.clear();
+		g_lockDayKline.unlock();
+		//清理已上传过Native数据的合约id
+		g_setUploadNativeQuoteId.clear();
+		//删除本地三天之前的历史数据
+		CleanHistoryData();
 		//清除当天已发送短信的总条数
-		try {
-			CTcpPullClientImpl::s_iDXTotalNum = 0;
-
-			//删除本地三天之前的历史数据(最长等待5分钟)
-			g_Logger->info("{}->清理历史数据, 最多等待5分钟", __FUNCTION__);
-			std::atomic<bool> cleanFinished(false);
-			std::thread cleanThread([&cleanFinished]() {
-				try {
-					CleanHistoryData();
-					cleanFinished = true;
-				}
-				catch (const std::exception& e) {
-					g_Logger->error("清理历史数据异常: {}", e.what());
-					cleanFinished = true;
-				}
-				catch (...) {
-					g_Logger->error("清理历史数据异常(unknown)");
-					cleanFinished = true;
-				}
-			});
-
-			auto startWait = std::chrono::steady_clock::now();
-			const int timeoutSeconds = 300; // 5分钟
-			bool timeout = false;
-
-			while (!cleanFinished) {
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-				auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
-					std::chrono::steady_clock::now() - startWait).count();
-
-				if (elapsed >= timeoutSeconds) {
-					timeout = true;
-					g_Logger->warn("清理历史数据超时({}s)", timeoutSeconds);
-					break;
-				}
-			}
-
-			if (timeout) {
-				cleanThread.detach();
-				g_Logger->warn("清理历史数据超时, 后台继续执行");
-			}
-			else {
-				if (cleanThread.joinable()) {
-					cleanThread.join();
-				}
-				g_Logger->info("清理历史数据完成");
-			}
-		}
-		catch (...)
-		{
-			g_Logger->error("清理历史数据线程异常");
-		}
-
-		g_Logger->info("{}->清理缓存流程完成", __FUNCTION__);
-
-		//清理队列缓存
-		try {
-			size_t hqdyCount = g_queueHQDYData.clear();
-			size_t handledCount = g_queueHandledData.clear();
-			g_Logger->info("清理队列缓存: HQDY={}, Handled={}", hqdyCount, handledCount);
-		}
-		catch (...)
-		{
-			g_Logger->error("清理队列缓存异常");
-		}
-
-		//清理上传交易日历史记录, 防止集合过大
-		try {
-			if (g_setUploadTradeDate.size() > 100) {
-				g_Logger->info("清理上传交易日缓存: {}", g_setUploadTradeDate.size());
-				set<CString>().swap(g_setUploadTradeDate);
-			}
-		}
-		catch (...)
-		{
-			g_Logger->error("清理上传交易日缓存异常");
-		}
-
+		CTcpPullClientImpl::s_iDXTotalNum = 0;
 #ifdef __GLIBC__
 		malloc_trim(0);  // 释放未使用的内存给操作系统
 		g_Logger->info("{}->执行malloc_trim内存整理", __FUNCTION__);
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		malloc_trim(0);
-		g_Logger->info("{}->执行第二次malloc_trim", __FUNCTION__);
 #endif
 	/*	g_lockLastSetPrice.lock();
 		for (auto &it : g_mapLastSetPrice)
@@ -3287,79 +3089,7 @@ void DeleteFile(const string& strPath)
 	//调用命令删除该文件夹
 	system(buffer.str().c_str());
 }
-void listDirAndClean(const string& strPath, int iYmd, int& deletedFiles, int& emptyDirs)
-{
-	DIR              *pDir;
-	struct dirent    *ent;
-
-	pDir = opendir(strPath.c_str());
-	if (pDir == NULL)
-		return;
-
-	bool bEmpty = true;
-	while ((ent = readdir(pDir)) != NULL)
-	{
-		if (ent->d_type & DT_DIR)
-		{
-			if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
-				continue;
-			bEmpty = false;
-			stringstream ssChildPath;
-			ssChildPath << strPath << "/" << ent->d_name;
-			listDirAndClean(ssChildPath.str(), iYmd, deletedFiles, emptyDirs);
-		}
-		else
-		{
-			bEmpty = false;
-			string fileName = ent->d_name;
-
-			bool shouldDelete = false;
-
-			// file name like: CFFEX_TF_09_20190531.5m
-			int index0 = fileName.rfind("_");
-			if (index0 != string::npos)
-			{
-				int index1 = fileName.find(".", index0);
-				if (index1 != string::npos)
-				{
-					int iDirYmd = atoi(fileName.substr(index0 + 1, index1).c_str());
-					if (iDirYmd < iYmd)
-						shouldDelete = true;
-				}
-			}
-			// file name like: 20190605.tick
-			else
-			{
-				int index1 = fileName.find(".");
-				if (index1 != string::npos)
-				{
-					int iDirYmd = atoi(fileName.substr(0, index1).c_str());
-					if (iDirYmd < iYmd)
-						shouldDelete = true;
-				}
-			}
-
-			if (shouldDelete)
-			{
-				string fullPath = strPath + "/" + fileName;
-				DeleteFile(fullPath);
-				deletedFiles++;
-
-				if (deletedFiles % 1000 == 0)
-				{
-					g_Logger->info("已删除 {} 个历史文件...", deletedFiles);
-				}
-			}
-		}
-	}
-	closedir(pDir);
-
-	if (bEmpty)
-	{
-		DeleteFile(strPath);
-		emptyDirs++;
-	}
-}void DeleteOldFiles(int iYmd, const list<pair<string, string>>& listFiles)
+void DeleteOldFiles(int iYmd, const list<pair<string, string>>& listFiles)
 {
 	for (const pair<string, string>& pathFile : listFiles)
 	{
@@ -3391,12 +3121,19 @@ void listDirAndClean(const string& strPath, int iYmd, int& deletedFiles, int& em
 //删除三天之前的历史数据文件
 void CleanHistoryData()
 {
-	auto startTime = std::chrono::steady_clock::now();
 	g_Logger->info("{}->清理三天之前的本地历史数据文件", __FUNCTION__);
 	CString strDigPath, strOriginalPath;
 	strDigPath.Format("%s/%s", g_strLocalDataDir.c_str(), (LPCSTR)g_mapProfile["dig"]);
 	strOriginalPath.Format("%s/%s", g_strLocalDataDir.c_str(), (LPCSTR)g_mapProfile["original"]);
-
+	list<pair<string, string>> listDigFiles, listOriginalFiles;
+	list<string> listDigEmptyDirs, listOriginalEmptyDirs;
+	listDir(strDigPath, listDigFiles, listDigEmptyDirs);
+	listDir(strOriginalPath, listOriginalFiles, listOriginalEmptyDirs);
+	//删除空的目录
+	for (string& emptyPath : listDigEmptyDirs)
+		DeleteFile(emptyPath);
+	for (string& emptyPath : listOriginalEmptyDirs)
+		DeleteFile(emptyPath);
 	//删除三天前的数据文件
 	time_t timep = ::time(NULL);
 	//获取三天前的时间
@@ -3405,27 +3142,8 @@ void CleanHistoryData()
 	//此函数获得的tm结构体的时间，是已经进行过时区转化为本地时间 
 	localtime_r(&timep, &tms);
 	int iYmd = (tms.tm_year + 1900) * 10000 + (tms.tm_mon + 1) * 100 + tms.tm_mday;
-
-	g_Logger->info("开始清理dig目录: {}, 截止日期: {}", (LPCSTR)strDigPath, iYmd);
-	int deletedDigFiles = 0, emptyDigDirs = 0;
-	auto digStartTime = std::chrono::steady_clock::now();
-	listDirAndClean(strDigPath, iYmd, deletedDigFiles, emptyDigDirs);
-	auto digEndTime = std::chrono::steady_clock::now();
-	auto digDuration = std::chrono::duration_cast<std::chrono::milliseconds>(digEndTime - digStartTime).count();
-	g_Logger->info("dig目录清理完成: 删除文件 {}, 空目录 {}, 耗时 {}ms", deletedDigFiles, emptyDigDirs, digDuration);
-
-	g_Logger->info("开始清理original目录: {}", (LPCSTR)strOriginalPath);
-	int deletedOriginalFiles = 0, emptyOriginalDirs = 0;
-	auto originalStartTime = std::chrono::steady_clock::now();
-	listDirAndClean(strOriginalPath, iYmd, deletedOriginalFiles, emptyOriginalDirs);
-	auto originalEndTime = std::chrono::steady_clock::now();
-	auto originalDuration = std::chrono::duration_cast<std::chrono::milliseconds>(originalEndTime - originalStartTime).count();
-	g_Logger->info("original目录清理完成: 删除文件 {}, 空目录 {}, 耗时 {}ms", deletedOriginalFiles, emptyOriginalDirs, originalDuration);
-
-	auto endTime = std::chrono::steady_clock::now();
-	auto totalDuration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-	g_Logger->info("历史数据清理完成, 删除文件: {}, 空目录: {}, 总耗时: {}ms",
-		deletedDigFiles + deletedOriginalFiles, emptyDigDirs + emptyOriginalDirs, totalDuration);
+	DeleteOldFiles(iYmd, listDigFiles);
+	DeleteOldFiles(iYmd, listOriginalFiles);
 }
 //----------------字符串编码--------------------//
 const string encode_dict[11] = { "MA", "cQ", "cw", "Yw", "Zg", "dA", "aA", "bQ", "aw", "bw", "Ow" };
@@ -3542,8 +3260,4 @@ void SplitString(const std::string& s, std::vector<CString>& v, const std::strin
 	if (pos1 != s.length())
 		v.push_back(s.substr(pos1));
 }
-
-
-
-
 

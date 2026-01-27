@@ -1,6 +1,3 @@
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
 #include "Util.h"
 #include "WorkerProcessor.h"
 #include "timer/PQTimer.h"

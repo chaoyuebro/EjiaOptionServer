@@ -295,16 +295,30 @@ void CTcpPullClientImpl::Parse(const BYTE* bData, int nDataLen, CONNID dwConnID)
 			m_tickCount = 0;
 			//更新合约列表
 			InitHeYueLieBiao(strData);			
-			//合约列表更新之后,更新一下品种的有效交易时间
-			InitTradeTime();
-		}
-		else if (strProtocol.CompareNoCase("OPHYXX") == 0)
+		//合约列表更新之后,更新一下品种的有效交易时间
+		InitTradeTime();
+	}
+	else if (strProtocol.CompareNoCase("NHYLB") == 0)
+	{
+		CWriteLock writelock(g_lockNHeyueLiebiao);
+		g_strNHeyueLiebiao = strData;
+		// Update NHYLB contract list expiration date
+		UpdateNHYLBExpireDate(g_strNHeyueLiebiao);
+		// Save contract list to local file
+		FILE* file = fopen("./ncontractJson.txt", "w+");
+		if (file != NULL)
 		{
-			InitOPHYXXAndPect(strData,true);
+			fwrite(g_strNHeyueLiebiao.GetString(), 1, g_strNHeyueLiebiao.GetLength(), file);
+			fclose(file);
 		}
+	}
+	else if (strProtocol.CompareNoCase("OPHYXX") == 0)
+	{
+		InitOPHYXXAndPect(strData,true);
+	}
 		//收到新的行情之后要先去重,保存到原始行情队列,然后将原始的行情解析成前端需要的行情格式,并计算内外盘并更新最新行情map表,
 		//然后生成全量数据字符串添加到200条全量数据队列,同时计算增量字符串,添加到5分钟缓存队列.并把增量字符串根据订阅列表推送给客户端
-		else if (strProtocol.CompareNoCase("HQOD") == 0 || strProtocol.CompareNoCase("HQDY") == 0)
+	else if (strProtocol.CompareNoCase("HQOD") == 0 || strProtocol.CompareNoCase("HQDY") == 0)
 		{
 			if (!isTimeBetween4pmAnd8pm()) {
 				g_queueHQDYData.enqueue(strData);
