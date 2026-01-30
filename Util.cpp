@@ -2936,6 +2936,11 @@ void UpdateNHYLBExpireDate(CStringA& strNHYLBJson)
 						CStringA strCurYear;
 						strCurYear.Format("%d", iCurYear);
 						strDate = strCurYear.Left(2) + strContractCode;
+					}else if (strContractCode.GetLength()==6)
+					{
+						CStringA strCurYear;
+						strCurYear.Format("%d", iCurYear);
+						strDate = strCurYear.Left(2) + strContractCode.Left(4);
 					}
 					// Month is in contract code, day is fixed as 1st
 					strDate += "01";
